@@ -20,7 +20,7 @@ import (
 const (
 	// MaxTileSize is 500k. Currently, just throws a warning when tile
 	// is larger than MaxTileSize
-	MaxTileSize = 500000
+	MaxTileSize = 5000000
 )
 
 var (

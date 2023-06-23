@@ -1,0 +1,71 @@
+# register a MVT data provider. MVT data providers have the prefix "mvt_" in their type
+# note mvt data providers can not be conflated with any other providers of any type in a map
+# thus a map may only contain a single mvt provider.
+[[providers]]
+name = "my_postgis"         # provider name is referenced from map layers (required).
+type = "mvt_postgis"        # the type of data provider must be "mvt_postgis" for this data provider (required)
+uri = "postgresql://postgres:HXL123456@a@10.11.16.52:5438/postgres?ssl_mode=prefer" # database connection string
+
+[[providers.layers]]
+name = "res_org_gr"
+# MVT data provider must use SQL statements
+# this table uses "geom" for the geometry_fieldname and "gid" for the id_fieldname so they don't need to be configured
+# Wrapping the geom with ST_AsMVTGeom is required.
+sql = "SELECT ST_AsMVTGeom(geom,!BBOX!) AS geom, org_id FROM resource.res_org_gr WHERE geom && !BBOX!"
+
+[[providers.layers]]
+name = "res_region_org_gis"
+# MVT data provider must use SQL statements
+# this table uses "geom" for the geometry_fieldname and "gid" for the id_fieldname so they don't need to be configured
+# Wrapping the geom with ST_AsMVTGeom is required.
+sql = "SELECT ST_AsMVTGeom(geom,!BBOX!) AS geom, region_id FROM resource.res_region_org_gis WHERE geom && !BBOX!"
+
+
+[[providers.layers]]
+name = "res_plot"
+# MVT data provider must use SQL statements
+# this table uses "geom" for the geometry_fieldname and "gid" for the id_fieldname so they don't need to be configured
+# Wrapping the geom with ST_AsMVTGeom is required.
+sql = "SELECT ST_AsMVTGeom(geom,!BBOX!) AS geom, plot_id FROM resource.res_plot WHERE geom && !BBOX! and year=2022"
+geometry_type="multipolygon"
+
+
+
+# maps are made up of layers
+[[maps]]
+name = "zoning"                           # used in the URL to reference this map (/maps/zoning)
+
+
+[[maps.layers]]
+name = "res_org_gr"                        # name is optional. If it's not defined the name of the ProviderLayer will be used.
+provider_layer = "my_postgis.res_org_gr"   # must match a data provider layer
+min_zoom = 0                           # minimum zoom level to include this layer
+max_zoom = 16                           # maximum zoom level to include this layer
+
+[[maps.layers]]
+name = "res_region_org_gis"                        # name is optional. If it's not defined the name of the ProviderLayer will be used.
+provider_layer = "my_postgis.res_region_org_gis"   # must match a data provider layer
+min_zoom = 0                           # minimum zoom level to include this layer
+max_zoom = 16                           # maximum zoom level to include this layer
+
+
+[[maps.layers]]
+name = "res_plot"                        # name is optional. If it's not defined the name of the ProviderLayer will be used.
+provider_layer = "my_postgis.res_plot"   # must match a data provider layer
+min_zoom = 0                           # minimum zoom level to include this layer
+max_zoom = 16
+
+# maximum zoom level to include this layer
+
+# configure addition URL parameters: /maps/:map_name/:layer_name/:z/:x/:y?param=value
+# which will be passed to the database queries
+[[maps.params]]
+name = "param"         # name used in the URL
+token = "!PARAM!"       # token to replace in providers.layers.sql query
+type = "string"        # one of: int, float, string, bool
+sql = "AND param = ?" # SQL to replace the token in the query. ? will be replaced with a parameter value. If omitted, defaults to "?"
+# if neither default_value nor default_sql is specified, the URL parameter is required to be present in all queries
+# either
+default_value = "4"         # if parameter is not specified, this value will be passed to .sql parameter
+# or
+#default_sql   = "1=1"             # if parameter is not specified, this value will replace the .sql parameter. Useful for omitting query entirely
